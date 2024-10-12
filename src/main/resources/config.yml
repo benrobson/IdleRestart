@@ -1,0 +1,2 @@
+# Time (in minutes) for the restart countdown
+countdown-time: 10  # Default is 10 (10 minutes)
