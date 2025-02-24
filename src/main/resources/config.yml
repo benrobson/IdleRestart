@@ -1,2 +1,18 @@
-# Time (in minutes) for the restart countdown
-countdown-time: 10  # Default is 10 (10 minutes)
+# IdleRestart Configuration
+
+# Number of minutes to wait before restarting the server when idle
+idle-minutes: 10
+
+# Number of players below which the server is considered idle
+number-of-players: 0
+
+# Whether to broadcast a message with a sound when a restart is scheduled
+broadcast-restart: true
+
+# Sound to play when a restart is broadcasted
+restart-sound: ENTITY_PLAYER_LEVELUP
+
+# Delay in minutes to restart when a player joins
+join-delay-minutes: 5
+
+idle-prefix: "&8&l[&6&lIR🕙&8&l]&r"

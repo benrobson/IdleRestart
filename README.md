@@ -1,52 +1,93 @@
-# IdleRestart
+
+# IdleRestart Plugin Documentation
 
 ## Overview
-The IdleRestart plugin provides a controlled method for restarting your Minecraft server when no players are online. It features a manual restart countdown that is triggered via a console command and includes an automatic delay/cancellation if players join during the countdown. This ensures that your server will never restart while players are online.
+
+The `IdleRestart` plugin is designed for Paper Minecraft servers to automatically restart the server after a specified period of inactivity. This plugin helps maintain server performance and ensures that the server is available during peak hours. It includes configurable options for idle time, player count, broadcast messages, and sounds.
 
 ## Features
-- **Manual Restart Trigger**: The restart countdown can only be started via a console command (`/idlerestart`), preventing accidental restarts.
-- **Player Join Check**: If a player joins while the countdown is active, the restart is delayed or canceled.
-- **Console-Only Messages**: All messages related to the plugin, such as the countdown status and player join notifications, are only sent to the console.
-- **Configurable Countdown Time**: The length of the restart countdown is fully configurable through the `config.yml` file.
 
-![](img/img.png)
+- Automatically restarts the server after a configurable period of inactivity.
+- Configurable idle time and player count thresholds.
+- Broadcasts messages with sounds when a restart is scheduled.
+- Allows administrators to force a restart within a specified number of minutes.
+- Delays restart when a player joins the server.
 
 ## Installation
-1. Download the IdleRestart plugin JAR file.
-2. Place the plugin JAR in your server’s `plugins` directory.
-3. Start or reload your server to generate the default configuration file.
-4. (Optional) Edit the `config.yml` to adjust the countdown duration.
-5. Restart the server for changes to take effect.
+
+1. **Download the Plugin**: Obtain the `IdleRestart.jar` file from the releases section or build it from the source.
+2. **Place the JAR File**: Move the `IdleRestart.jar` file into the `plugins` directory of your Paper server.
+3. **Start/Restart the Server**: Start or restart your Paper server to load the plugin.
+4. **Configure the Plugin**: Edit the `config.yml` file in the `plugins/IdleRestart` directory to customize the plugin settings.
+
+## Configuration
+
+The `config.yml` file contains the following configurable options:
+
+```yaml
+# IdleRestart Configuration
+
+# Number of minutes to wait before restarting the server when idle
+idle-minutes: 10
+
+# Number of players below which the server is considered idle
+number-of-players: 0
+
+# Whether to broadcast a message with a sound when a restart is scheduled
+broadcast-restart: true
+
+# Sound to play when a restart is broadcasted
+restart-sound: ENTITY_PLAYER_LEVELUP
+
+# Delay in minutes to restart when a player joins
+join-delay-minutes: 5
+
+# Prefix for all plugin messages
+idle-prefix: "[&8[&6IR🔙&8]&r]"
+```
+
+### Configuration Options
+
+- **`idle-minutes`**: The number of minutes the server must be idle before a restart is triggered.
+- **`number-of-players`**: The number of players below which the server is considered idle.
+- **`broadcast-restart`**: Whether to broadcast a message with a sound when a restart is scheduled.
+- **`restart-sound`**: The sound to play when a restart is broadcasted.
+- **`join-delay-minutes`**: The delay in minutes before restarting the server when a player joins.
+- **`idle-prefix`**: The prefix to include in all messages sent by the plugin.
 
 ## Commands
 
-- `/idlerestart`
-  - **Description**: Initiates the restart countdown if no players are online. Only executable via the server console.
+### `/idlerestart <idleMinutes> <numberOfPlayers>`
 
-## How It Works
+- **Description**: Configures the idle time and player count for the idle restart feature.
+- **Usage**: `/idlerestart 15 0`
+- **Permission**: `idlerestart.use`
 
-1. **Manual Trigger**: The server administrator can run the `/idlerestart` command from the console to initiate the countdown for a server restart.
-2. **Countdown Timer**: The countdown (default: 10 minutes) will start and notify the console of the remaining time at regular intervals.
-3. **Player Join Detection**: If a player joins during the countdown, the restart will be canceled, and a message will be sent to the console informing that the restart was delayed due to player activity.
-4. **Restart Execution**: If no players are online when the countdown reaches zero, the server will automatically restart.
+### `/idlerestart --force <minutes>`
 
-* Start the Countdown:
-  * From the server console, type: `/idlerestart`
-  * You will see a message in the console: `[IdleRestart] Server restart countdown started.`
-* During Countdown:
-  * The console will display messages about the time left until the restart:
-    * `[IdleRestart] Restart in 600 seconds.`
-    * `[IdleRestart] Restart in 590 seconds.`
-  * If a Player Joins:
-    * If a player joins during the countdown, the restart will be canceled:
-      * `[IdleRestart] Player joined. Restart delayed.`
-  * When the Countdown Reaches Zero:
-    * If no players are online, the server will restart: `[IdleRestart] Restarting server now.`
+- **Description**: Forces a server restart in the specified number of minutes, bypassing the idle check.
+- **Usage**: `/idlerestart --force 5`
+- **Permission**: `idlerestart.use`
 
+### `/idlerestartstatus`
 
-## Configuration (`config.yml`)
+- **Description**: Checks the status of the pending restart.
+- **Usage**: `/idlerestartstatus`
+- **Permission**: `idlerestart.status`
 
-```yaml
-# Time (in minutes) for the restart countdown
-countdown-time: 10  # Default is 10 (10 minutes)
-```
+## Permissions
+
+- **`idlerestart.use`**: Allows using the `/idlerestart` command to configure idle restarts or force a restart.
+- **`idlerestart.status`**: Allows using the `/idlerestartstatus` command to check the status of a pending restart.
+
+## Example Usage
+
+1. **Configure Idle Restart**:
+  - Use the command `/idlerestart 15 0` to set the idle time to 15 minutes and consider the server idle when there are 0 players online.
+2. **Force Immediate Restart**:
+  - Use the command `/idlerestart --force 5` to force a server restart in 5 minutes, regardless of the current player count.
+3. **Check Restart Status**:
+  - Use the command `/idlerestartstatus` to check if a restart is pending and how long it has been pending.
+
+## Support
+For support or feature requests, please open an issue on the GitHub repository.

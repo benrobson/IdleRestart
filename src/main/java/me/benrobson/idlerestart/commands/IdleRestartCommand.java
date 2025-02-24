@@ -4,7 +4,6 @@ import me.benrobson.idlerestart.IdleRestartMain;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.jetbrains.annotations.NotNull;
 
 public class IdleRestartCommand implements CommandExecutor {
     private final IdleRestartMain plugin;
@@ -14,35 +13,34 @@ public class IdleRestartCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String s, String[] args) {
-        if (!(sender instanceof org.bukkit.command.ConsoleCommandSender)) {
-            sender.sendMessage("This command can only be executed from the console.");
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("idlerestart.use")) {
+            sender.sendMessage(plugin.getIdlePrefix() + " You do not have permission to use this command.");
             return true;
         }
 
-        if (args.length > 0) {
-            if (args[0].equalsIgnoreCase("start")) {
-                if (plugin.isRestarting) {
-                    sender.sendMessage("Idle restart is already in progress.");
-                    return true;
-                }
-                plugin.startRestartCountdown();
-                sender.sendMessage("Idle restart countdown started.");
-                return true;
+        if (args.length >= 2 && "--force".equals(args[0])) {
+            try {
+                int forceMinutes = Integer.parseInt(args[1]);
+                sender.sendMessage(plugin.getIdlePrefix() + " Forcing server restart in " + forceMinutes + " minutes.");
+                plugin.forceRestart(forceMinutes);
+            } catch (NumberFormatException e) {
+                sender.sendMessage(plugin.getIdlePrefix() + " Invalid number format. Usage: /idlerestart --force <minutes>");
             }
-
-            if (args[0].equalsIgnoreCase("stop")) {
-                if (!plugin.isRestarting) {
-                    sender.sendMessage("No idle restart in progress.");
-                    return true;
-                }
-                plugin.stopRestartCountdown();
-                sender.sendMessage("Idle restart countdown stopped.");
-                return true;
+        } else if (args.length == 2) {
+            try {
+                int idleMinutes = Integer.parseInt(args[0]);
+                int numberOfPlayers = Integer.parseInt(args[1]);
+                plugin.setIdleMinutes(idleMinutes);
+                plugin.setNumberOfPlayers(numberOfPlayers);
+                sender.sendMessage(plugin.getIdlePrefix() + " IdleRestart configured with " + idleMinutes + " minutes and " + numberOfPlayers + " players.");
+                plugin.startIdleCheck();
+            } catch (NumberFormatException e) {
+                sender.sendMessage(plugin.getIdlePrefix() + " Invalid number format. Usage: /idlerestart <idleMinutes> <numberOfPlayers>");
             }
+        } else {
+            sender.sendMessage(plugin.getIdlePrefix() + " Usage: /idlerestart <idleMinutes> <numberOfPlayers> or /idlerestart --force <minutes>");
         }
-
-        sender.sendMessage("Usage: /idlerestart <start|stop>");
         return true;
     }
 }

@@ -1,0 +1,23 @@
+name: IdleRestart
+version: 1.0.0
+main: me.benrobson.idlerestart.IdleRestartMain
+api-version: '1.21'
+description: Restarts the server after a set amount of minutes with no players online.
+
+commands:
+  idlerestart:
+    description: Restarts the server based on idle time and player count.
+    usage: /idlerestart <idleMinutes> <numberOfPlayers>
+    permission: idlerestart.use
+  idlerestartstatus:
+    description: Checks the status of the pending restart.
+    usage: /idlerestartstatus
+    permission: idlerestart.status
+
+permissions:
+  idlerestart.use:
+    description: Allows using the idlerestart command.
+    default: op
+  idlerestart.status:
+    description: Allows checking the status of the pending restart.
+    default: op
