@@ -1,32 +1,20 @@
 package me.benrobson.idlerestart.events;
 
-import me.benrobson.idlerestart.IdleRestartMain;
-import org.bukkit.Bukkit;
+import me.benrobson.idlerestart.IdleRestartCore;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scheduler.BukkitRunnable;
 
 public class PlayerJoinListener implements Listener {
-    private final IdleRestartMain plugin;
+    private final IdleRestartCore core;
 
-    public PlayerJoinListener(IdleRestartMain plugin) {
-        this.plugin = plugin;
+    public PlayerJoinListener(IdleRestartCore core) {
+        this.core = core;
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if (plugin.isRestarting()) {
-            plugin.cancelRestart();
-            Bukkit.getConsoleSender().sendMessage("[IdleRestart] Player joined. Restart delayed.");
-
-            // Schedule a new restart check after the delay
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    plugin.startIdleCheck();
-                }
-            }.runTaskLater(plugin, plugin.getJoinDelayMinutes() * 60 * 20L);
-        }
+        // The core logic for handling player joins is now in IdleRestartCore
+        core.onPlayerJoin();
     }
 }
