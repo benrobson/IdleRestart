@@ -21,3 +21,6 @@ permissions:
   idlerestart.status:
     description: Allows checking the status of the pending restart.
     default: op
+  idlerestart.reload:
+    description: Allows reloading the IdleRestart configuration.
+    default: op

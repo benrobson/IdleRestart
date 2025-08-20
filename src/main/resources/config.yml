@@ -16,3 +16,24 @@ restart-sound: ENTITY_PLAYER_LEVELUP
 join-delay-minutes: 5
 
 idle-prefix: "&8&l[&6&lIR🕙&8&l]&r"
+
+# Scheduled Restarts
+# Enable or disable scheduled restarts
+scheduled-restarts:
+  enabled: false
+  # A list of times in HH:mm format (24-hour clock) to restart the server
+  times:
+    - "04:00"
+    - "16:00"
+  # The timezone to use for scheduled restarts.
+  # A list of valid timezones can be found here: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  timezone: "UTC"
+
+# Discord Webhook
+# Enable or disable Discord webhook notifications
+discord:
+  enabled: false
+  # The webhook URL from Discord
+  webhook-url: ""
+  # The name of the server to display in the notification
+  server-name: "My Server"

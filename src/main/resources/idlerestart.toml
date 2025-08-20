@@ -1,0 +1,32 @@
+# IdleRestart Configuration for Velocity
+
+# Number of minutes to wait before restarting the proxy when idle
+idle-minutes = 10
+
+# Number of players below which the proxy is considered idle
+number-of-players = 0
+
+# Whether to broadcast a message when a restart is scheduled
+# Sound is not supported on Velocity.
+broadcast-restart = true
+
+# Sound to play (ignored by Velocity, but kept for consistency)
+restart-sound = "ENTITY_PLAYER_LEVELUP"
+
+# Delay in minutes to restart when a player joins and cancels a pending restart
+join-delay-minutes = 5
+
+# Prefix for all plugin messages (uses legacy '&' color codes)
+idle-prefix = "[&8[&6IR🔙&8]&r]"
+
+# Scheduled Restarts
+[scheduled-restarts]
+enabled = false
+times = ["04:00", "16:00"]
+timezone = "UTC"
+
+# Discord Webhook
+[discord]
+enabled = false
+webhook-url = ""
+server-name = "My Proxy"

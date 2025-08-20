@@ -166,4 +166,45 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
     public void reloadConfig() {
         plugin.getConfigManager().loadConfig();
     }
+
+    @Override
+    public boolean isScheduledRestartEnabled() {
+        return plugin.getConfigManager().isScheduledRestartEnabled();
+    }
+
+    @Override
+    public java.util.List<String> getScheduledRestartTimes() {
+        return plugin.getConfigManager().getScheduledRestartTimes();
+    }
+
+    @Override
+    public String getScheduledRestartTimezone() {
+        return plugin.getConfigManager().getScheduledRestartTimezone();
+    }
+
+    @Override
+    public void reload() {
+        plugin.reload();
+    }
+
+    @Override
+    public boolean isDiscordWebhookEnabled() {
+        return plugin.getConfigManager().isDiscordWebhookEnabled();
+    }
+
+    @Override
+    public String getDiscordWebhookUrl() {
+        return plugin.getConfigManager().getDiscordWebhookUrl();
+    }
+
+    @Override
+    public String getDiscordServerName() {
+        return plugin.getConfigManager().getDiscordServerName();
+    }
+
+    @Override
+    public void callEvent(Object event) {
+        // Velocity does not have a synchronous, Bukkit-like event bus that can be called this way.
+        // This will be a no-op for Velocity.
+    }
 }
