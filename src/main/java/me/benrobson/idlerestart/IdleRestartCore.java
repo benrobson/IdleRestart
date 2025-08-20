@@ -1,19 +1,25 @@
 package me.benrobson.idlerestart;
 
+import me.benrobson.idlerestart.api.events.RestartCancelledEvent;
+import me.benrobson.idlerestart.api.events.RestartForcedEvent;
+import me.benrobson.idlerestart.api.events.RestartScheduledEvent;
 import me.benrobson.idlerestart.platform.PlatformAdapter;
 import me.benrobson.idlerestart.platform.PlayerAdapter;
 import me.benrobson.idlerestart.platform.SchedulerTask;
+import me.benrobson.idlerestart.webhook.DiscordWebhookManager;
 
 public class IdleRestartCore {
     private final PlatformAdapter platform;
+    private final DiscordWebhookManager webhookManager;
     private boolean isRestarting = false;
     private long restartTimeMillis = 0; // Time when the restart was initiated
     private long actualRestartTimeMillis = 0; // Time when server will actually restart
     private SchedulerTask currentShutdownTask;
     private SchedulerTask idleCheckTask;
 
-    public IdleRestartCore(PlatformAdapter platform) {
+    public IdleRestartCore(PlatformAdapter platform, DiscordWebhookManager webhookManager) {
         this.platform = platform;
+        this.webhookManager = webhookManager;
     }
 
     public void initialize() {
@@ -65,11 +71,14 @@ public class IdleRestartCore {
             }
         }, minutes * 60 * 20L); // minutes to ticks
         platform.info("Server restart scheduled in " + minutes + " minutes.");
+        webhookManager.sendRestartNotification(reason);
+        platform.callEvent(new RestartScheduledEvent(minutes, reason));
     }
 
     public void forceRestart(int minutes) {
         platform.info("Forcing server restart in " + minutes + " minutes.");
         scheduleRestart(minutes, "due to forced restart");
+        platform.callEvent(new RestartForcedEvent(minutes));
     }
 
     private void cancelCurrentShutdownTask() {
@@ -88,6 +97,7 @@ public class IdleRestartCore {
             if (platform.isBroadcastRestart()) {
                 platform.broadcastMessage(platform.getIdlePrefix() + " Server restart has been cancelled. Reason: " + reason);
             }
+            platform.callEvent(new RestartCancelledEvent(reason));
         }
     }
 
@@ -148,5 +158,18 @@ public class IdleRestartCore {
             idleCheckTask.cancel();
         }
         cancelCurrentShutdownTask();
+    }
+
+    public void reload() {
+        // The ScheduledRestartManager will be reloaded from the main plugin class
+        // as it's not directly managed by the core.
+        // However, if there were any core-specific caches or settings from config,
+        // they would be reloaded here.
+        platform.info("IdleRestartCore reloaded.");
+        // For example, if idle check is running, we might want to restart it
+        // to pick up new values if they were changed.
+        if (idleCheckTask != null && !idleCheckTask.isCancelled()) {
+            startIdleCheck();
+        }
     }
 }

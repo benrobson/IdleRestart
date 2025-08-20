@@ -26,4 +26,18 @@ public interface PlatformAdapter {
     void reloadConfig(); // Or a method to update specific config values
     // Config access might need to be part of the adapter or a separate service
     // For now, let's assume main plugin class will handle config and pass values to adapter
+
+    // Scheduled Restarts
+    boolean isScheduledRestartEnabled();
+    java.util.List<String> getScheduledRestartTimes();
+    String getScheduledRestartTimezone();
+    void reload();
+
+    // Discord Webhook
+    boolean isDiscordWebhookEnabled();
+    String getDiscordWebhookUrl();
+    String getDiscordServerName();
+
+    // Events
+    void callEvent(Object event);
 }

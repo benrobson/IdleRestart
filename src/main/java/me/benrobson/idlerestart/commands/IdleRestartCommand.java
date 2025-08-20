@@ -22,7 +22,14 @@ public class IdleRestartCommand implements CommandExecutor {
             return true;
         }
 
-        if (args.length >= 2 && "--force".equalsIgnoreCase(args[0])) { // Use equalsIgnoreCase for flexibility
+        if (args.length == 1 && "reload".equalsIgnoreCase(args[0])) {
+            if (!sender.hasPermission("idlerestart.reload")) {
+                sender.sendMessage(platform.getIdlePrefix() + " You do not have permission to use this command.");
+                return true;
+            }
+            platform.reload();
+            sender.sendMessage(platform.getIdlePrefix() + " IdleRestart configuration reloaded.");
+        } else if (args.length >= 2 && "--force".equalsIgnoreCase(args[0])) { // Use equalsIgnoreCase for flexibility
             try {
                 int forceMinutes = Integer.parseInt(args[1]);
                 if (forceMinutes <= 0) {
@@ -55,7 +62,7 @@ public class IdleRestartCommand implements CommandExecutor {
                 sender.sendMessage(platform.getIdlePrefix() + " Invalid number format. Usage: /idlerestart <idleMinutes> <numberOfPlayers>");
             }
         } else {
-            sender.sendMessage(platform.getIdlePrefix() + " Usage: /idlerestart <idleMinutes> <numberOfPlayers> OR /idlerestart --force <minutes>");
+            sender.sendMessage(platform.getIdlePrefix() + " Usage: /idlerestart <idleMinutes> <numberOfPlayers> OR /idlerestart --force <minutes> OR /idlerestart reload");
         }
         return true;
     }

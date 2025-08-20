@@ -10,6 +10,8 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import me.benrobson.idlerestart.IdleRestartCore;
 import me.benrobson.idlerestart.platform.PlatformAdapter;
 import me.benrobson.idlerestart.platform.VelocityPlatformAdapter;
+import me.benrobson.idlerestart.scheduler.ScheduledRestartManager;
+import me.benrobson.idlerestart.webhook.DiscordWebhookManager;
 import me.benrobson.idlerestart.velocity.command.VelocityIdleRestartCommand;
 import me.benrobson.idlerestart.velocity.command.VelocityIdleRestartStatusCommand;
 import me.benrobson.idlerestart.velocity.listener.VelocityPlayerListener;
@@ -33,6 +35,8 @@ public class VelocityIdleRestartMain {
     private IdleRestartCore core;
     private PlatformAdapter platformAdapter;
     private VelocityConfigManager configManager;
+    private DiscordWebhookManager discordWebhookManager;
+    private ScheduledRestartManager scheduledRestartManager;
 
     @Inject
     public VelocityIdleRestartMain(ProxyServer proxy, Logger logger, @DataDirectory Path dataDirectory) {
@@ -47,8 +51,13 @@ public class VelocityIdleRestartMain {
         // ConfigManager loads config upon instantiation.
 
         this.platformAdapter = new VelocityPlatformAdapter(proxy, logger, this);
-        this.core = new IdleRestartCore(this.platformAdapter);
+        this.discordWebhookManager = new DiscordWebhookManager(this.platformAdapter);
+        this.core = new IdleRestartCore(this.platformAdapter, this.discordWebhookManager);
         this.core.initialize(); // Core logic initialization
+
+        // Scheduled Restarts
+        this.scheduledRestartManager = new ScheduledRestartManager(this.core, this.platformAdapter);
+        this.scheduledRestartManager.scheduleRestarts();
 
         // Register commands
         proxy.getCommandManager().register(
@@ -84,5 +93,15 @@ public class VelocityIdleRestartMain {
 
     public PlatformAdapter getPlatformAdapter() {
         return platformAdapter;
+    }
+
+    public void reload() {
+        configManager.loadConfig();
+        core.reload(); // Reloads idle check
+
+        if (scheduledRestartManager != null) {
+            scheduledRestartManager.scheduleRestarts(); // This will cancel old and schedule new
+        }
+        logger.info("IdleRestart configuration and scheduled restarts have been reloaded.");
     }
 }

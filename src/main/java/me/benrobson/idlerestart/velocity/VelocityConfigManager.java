@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 public class VelocityConfigManager {
     private final Path dataDirectory;
@@ -21,6 +23,16 @@ public class VelocityConfigManager {
     private String restartSound = "ENTITY_PLAYER_LEVELUP"; // Will be ignored by Velocity mostly
     private int joinDelayMinutes = 5;
     private String idlePrefix = "[&8[&6IR🔙&8]&r]"; // Legacy color codes
+
+    // Scheduled Restarts
+    private boolean scheduledRestartEnabled = false;
+    private List<String> scheduledRestartTimes = Arrays.asList("04:00", "16:00");
+    private String scheduledRestartTimezone = "UTC";
+
+    // Discord Webhook
+    private boolean discordWebhookEnabled = false;
+    private String discordWebhookUrl = "";
+    private String discordServerName = "My Server";
 
     public VelocityConfigManager(Path dataDirectory, Logger logger) {
         this.dataDirectory = dataDirectory;
@@ -50,6 +62,16 @@ public class VelocityConfigManager {
             joinDelayMinutes = config.getIntOrElse("join-delay-minutes", joinDelayMinutes);
             idlePrefix = config.getOrElse("idle-prefix", idlePrefix);
 
+            // Scheduled Restarts
+            scheduledRestartEnabled = config.getOrElse("scheduled-restarts.enabled", scheduledRestartEnabled);
+            scheduledRestartTimes = config.getOrElse("scheduled-restarts.times", scheduledRestartTimes);
+            scheduledRestartTimezone = config.getOrElse("scheduled-restarts.timezone", scheduledRestartTimezone);
+
+            // Discord Webhook
+            discordWebhookEnabled = config.getOrElse("discord.enabled", discordWebhookEnabled);
+            discordWebhookUrl = config.getOrElse("discord.webhook-url", discordWebhookUrl);
+            discordServerName = config.getOrElse("discord.server-name", discordServerName);
+
             // Ensure values are saved if they were defaulted
             config.save();
 
@@ -78,8 +100,21 @@ public class VelocityConfigManager {
         config.setComment("idle-prefix", "Prefix for all plugin messages (uses legacy '&' color codes)");
         if (!config.contains("idle-prefix")) config.set("idle-prefix", idlePrefix);
 
-        // No need to call config.save() here as the builder has .autosave()
-        // and the main loadConfig method calls config.save() after this.
+        // Scheduled Restarts
+        config.setComment("scheduled-restarts.enabled", "Enable or disable scheduled restarts");
+        if (!config.contains("scheduled-restarts.enabled")) config.set("scheduled-restarts.enabled", scheduledRestartEnabled);
+        config.setComment("scheduled-restarts.times", "A list of times in HH:mm format (24-hour clock) to restart the server");
+        if (!config.contains("scheduled-restarts.times")) config.set("scheduled-restarts.times", scheduledRestartTimes);
+        config.setComment("scheduled-restarts.timezone", "The timezone for scheduled restarts. Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones");
+        if (!config.contains("scheduled-restarts.timezone")) config.set("scheduled-restarts.timezone", scheduledRestartTimezone);
+
+        // Discord Webhook
+        config.setComment("discord.enabled", "Enable or disable Discord webhook notifications");
+        if (!config.contains("discord.enabled")) config.set("discord.enabled", discordWebhookEnabled);
+        config.setComment("discord.webhook-url", "The webhook URL from Discord");
+        if (!config.contains("discord.webhook-url")) config.set("discord.webhook-url", discordWebhookUrl);
+        config.setComment("discord.server-name", "The name of the server to display in the notification");
+        if (!config.contains("discord.server-name")) config.set("discord.server-name", discordServerName);
     }
 
     private void save() {
@@ -95,6 +130,12 @@ public class VelocityConfigManager {
     public String getRestartSound() { return restartSound; }
     public int getJoinDelayMinutes() { return joinDelayMinutes; }
     public String getIdlePrefix() { return idlePrefix; }
+    public boolean isScheduledRestartEnabled() { return scheduledRestartEnabled; }
+    public java.util.List<String> getScheduledRestartTimes() { return scheduledRestartTimes; }
+    public String getScheduledRestartTimezone() { return scheduledRestartTimezone; }
+    public boolean isDiscordWebhookEnabled() { return discordWebhookEnabled; }
+    public String getDiscordWebhookUrl() { return discordWebhookUrl; }
+    public String getDiscordServerName() { return discordServerName; }
 
     // Setters that also update the config file
     public void setIdleMinutes(int idleMinutes) {
@@ -108,6 +149,4 @@ public class VelocityConfigManager {
         config.set("number-of-players", numberOfPlayers);
         save();
     }
-    // Other setters can be added if runtime modification of these specific values is needed for Velocity
-    // For now, broadcast-restart, restart-sound, join-delay-minutes, idle-prefix are not settable by command in original.
 }

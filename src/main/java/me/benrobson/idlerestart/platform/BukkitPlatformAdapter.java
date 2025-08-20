@@ -133,4 +133,46 @@ public class BukkitPlatformAdapter implements PlatformAdapter {
         plugin.reloadConfig();
         // Need to update the main plugin's fields as well, or have IdleRestartCore use adapter for these
     }
+
+    @Override
+    public boolean isScheduledRestartEnabled() {
+        return plugin.getConfig().getBoolean("scheduled-restarts.enabled", false);
+    }
+
+    @Override
+    public java.util.List<String> getScheduledRestartTimes() {
+        return plugin.getConfig().getStringList("scheduled-restarts.times");
+    }
+
+    @Override
+    public String getScheduledRestartTimezone() {
+        return plugin.getConfig().getString("scheduled-restarts.timezone", "UTC");
+    }
+
+    @Override
+    public void reload() {
+        plugin.reload();
+    }
+
+    @Override
+    public boolean isDiscordWebhookEnabled() {
+        return plugin.getConfig().getBoolean("discord.enabled", false);
+    }
+
+    @Override
+    public String getDiscordWebhookUrl() {
+        return plugin.getConfig().getString("discord.webhook-url", "");
+    }
+
+    @Override
+    public String getDiscordServerName() {
+        return plugin.getConfig().getString("discord.server-name", "My Server");
+    }
+
+    @Override
+    public void callEvent(Object event) {
+        if (event instanceof org.bukkit.event.Event) {
+            Bukkit.getPluginManager().callEvent((org.bukkit.event.Event) event);
+        }
+    }
 }

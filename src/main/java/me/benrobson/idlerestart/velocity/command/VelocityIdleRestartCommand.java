@@ -31,7 +31,14 @@ public class VelocityIdleRestartCommand implements SimpleCommand {
             return;
         }
 
-        if (args.length >= 2 && "--force".equalsIgnoreCase(args[0])) {
+        if (args.length == 1 && "reload".equalsIgnoreCase(args[0])) {
+            if (!source.hasPermission("idlerestart.reload")) {
+                source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &cYou do not have permission to use this command."));
+                return;
+            }
+            platform.reload();
+            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &aIdleRestart configuration reloaded."));
+        } else if (args.length >= 2 && "--force".equalsIgnoreCase(args[0])) {
             try {
                 int forceMinutes = Integer.parseInt(args[1]);
                 if (forceMinutes <= 0) {
@@ -62,7 +69,7 @@ public class VelocityIdleRestartCommand implements SimpleCommand {
                 source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &cInvalid number format. Usage: /vidlerestart <idleMinutes> <numberOfPlayers>"));
             }
         } else {
-            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &cUsage: /vidlerestart <idleMinutes> <numberOfPlayers> OR /vidlerestart --force <minutes>"));
+            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &cUsage: /vidlerestart <idleMinutes> <numberOfPlayers> OR /vidlerestart --force <minutes> OR /vidlerestart reload"));
         }
     }
 

@@ -1,137 +1,194 @@
-
 # IdleRestart Plugin Documentation
 
 ## Overview
 
-The `IdleRestart` plugin is designed for **Paper Minecraft servers** and **Velocity proxies** to automatically restart the server/proxy after a specified period of inactivity. This plugin helps maintain server/proxy performance and ensures availability. It includes configurable options for idle time, player count, broadcast messages, and sounds (sounds are Paper-only).
+The `IdleRestart` plugin is designed for **PaperMC servers** and **Velocity proxies** to automatically restart after a specified period of inactivity. This plugin helps maintain performance and ensures availability.
+
+This new version introduces scheduled restarts, Discord webhook notifications, and a developer API for advanced integration on both platforms.
 
 ## Features
 
 - Automatically restarts the server/proxy after a configurable period of inactivity.
+- **NEW**: Schedule automatic restarts at specific times of the day with timezone support.
+- **NEW**: Send notifications to a Discord webhook when a restart is scheduled.
 - Configurable idle time and player count thresholds.
 - Broadcasts messages when a restart is scheduled (with sounds on Paper).
-- Allows administrators to force a restart within a specified number of minutes.
-- Delays restart when a player joins the server/proxy.
-- Supports both Paper (Bukkit-based servers) and Velocity proxies.
+- Allows administrators to force a restart or reload the configuration.
+- Delays restart if a player joins the server/proxy.
+- **NEW**: A developer API for other plugins to interact with IdleRestart.
 
 ## Installation
 
-1.  **Download the Plugin**: Obtain the `IdleRestart.jar` file from the releases section or build it from the source. This single JAR file works for both Paper and Velocity.
+1.  **Download the Plugin**: Obtain the `IdleRestart.jar` file from the releases section. This single JAR works for both Paper and Velocity.
 2.  **Place the JAR File**:
-    *   **For Paper servers**: Move the `IdleRestart.jar` file into the `plugins` directory of your Paper server.
-    *   **For Velocity proxies**: Move the `IdleRestart.jar` file into the `plugins` directory of your Velocity proxy.
-3.  **Start/Restart the Server/Proxy**: Start or restart your Paper server or Velocity proxy to load the plugin.
-4.  **Configure the Plugin**:
-    *   **For Paper**: Edit the `config.yml` file in the `plugins/IdleRestart` directory.
-    *   **For Velocity**: Edit the `idlerestart.toml` file in the `plugins/idlerestart` directory (note the lowercase plugin ID for the folder).
+    *   **For Paper servers**: Move `IdleRestart.jar` into the `plugins` directory.
+    *   **For Velocity proxies**: Move `IdleRestart.jar` into the `plugins` directory.
+3.  **Start/Restart**: Start or restart your server/proxy to load the plugin.
+4.  **Configure**:
+    *   **For Paper**: Edit `config.yml` in `plugins/IdleRestart/`.
+    *   **For Velocity**: Edit `idlerestart.toml` in `plugins/idlerestart/`.
 
 ## Configuration
-
-Configuration options are similar for both platforms but reside in different files.
 
 ### Paper (`plugins/IdleRestart/config.yml`)
 
 ```yaml
 # IdleRestart Configuration for Paper
-
-# Number of minutes to wait before restarting the server when idle
 idle-minutes: 10
-
-# Number of players below which the server is considered idle
 number-of-players: 0
-
-# Whether to broadcast a message with a sound when a restart is scheduled
 broadcast-restart: true
-
-# Sound to play when a restart is broadcasted (Paper only)
-restart-sound: "ENTITY_PLAYER_LEVELUP" # Ensure sound names are valid Bukkit Sound enums
-
-# Delay in minutes to restart when a player joins and cancels a pending restart
+restart-sound: ENTITY_PLAYER_LEVELUP
 join-delay-minutes: 5
+idle-prefix: "&8&l[&6&lIR🕙&8&l]&r"
 
-# Prefix for all plugin messages (uses legacy '&' color codes)
-idle-prefix: "[&8[&6IR🔙&8]&r]"
+# Scheduled Restarts
+scheduled-restarts:
+  enabled: false
+  times: ["04:00", "16:00"]
+  timezone: "UTC"
+
+# Discord Webhook
+discord:
+  enabled: false
+  webhook-url: ""
+  server-name: "My Server"
 ```
 
 ### Velocity (`plugins/idlerestart/idlerestart.toml`)
 
 ```toml
 # IdleRestart Configuration for Velocity
-
-# Number of minutes to wait before restarting the proxy when idle
 idle-minutes = 10
-
-# Number of players below which the proxy is considered idle
 number-of-players = 0
-
-# Whether to broadcast a message when a restart is scheduled
-# Sound is not supported on Velocity.
 broadcast-restart = true
-
-# Sound to play (ignored by Velocity, but kept for consistency)
-restart-sound = "ENTITY_PLAYER_LEVELUP"
-
-# Delay in minutes to restart when a player joins and cancels a pending restart
+restart-sound = "ENTITY_PLAYER_LEVELUP" # Ignored by Velocity
 join-delay-minutes = 5
-
-# Prefix for all plugin messages (uses legacy '&' color codes)
 idle-prefix = "[&8[&6IR🔙&8]&r]"
+
+# Scheduled Restarts
+[scheduled-restarts]
+enabled = false
+times = ["04:00", "16:00"]
+timezone = "UTC"
+
+# Discord Webhook
+[discord]
+enabled = false
+webhook-url = ""
+server-name = "My Proxy"
 ```
 
-### Configuration Options (Common)
+### Configuration Options
 
--   **`idle-minutes`**: The number of minutes the server/proxy must be idle before a restart is triggered.
--   **`number-of-players`**: The number of players (on the server for Paper, on the proxy for Velocity) below which it's considered idle.
--   **`broadcast-restart`**: Whether to broadcast a message when a restart is scheduled.
--   **`restart-sound`**: The sound to play when a restart is broadcasted. **Note: This option is only effective on Paper servers. Velocity does not support playing sounds directly.**
--   **`join-delay-minutes`**: The delay in minutes before re-initiating an idle check if a pending restart was cancelled due to a player joining.
--   **`idle-prefix`**: The prefix to include in all messages sent by the plugin (supports standard Minecraft `&` color codes).
+-   `idle-minutes`: Minutes the server/proxy must be idle before a restart.
+-   `number-of-players`: Player count threshold for idle status.
+-   `broadcast-restart`: Whether to broadcast a message on restart.
+-   `restart-sound`: Sound to play on broadcast (Paper only).
+-   `join-delay-minutes`: Delay before re-initiating idle check after a player cancels a restart by joining.
+-   `idle-prefix`: Prefix for plugin messages (supports `&` color codes).
+-   `scheduled-restarts.enabled`: Enable/disable scheduled restarts.
+-   `scheduled-restarts.times`: List of times ("HH:mm") to schedule restarts.
+-   `scheduled-restarts.timezone`: Timezone for scheduled restarts (e.g., "UTC", "America/New_York").
+-   `discord.enabled`: Enable/disable Discord webhook notifications.
+-   `discord.webhook-url`: URL for the Discord webhook.
+-   `discord.server-name`: Name for your server/proxy in Discord notifications.
 
 ## Commands
 
-Commands are similar for both platforms, but Velocity commands are typically prefixed with `v_` or aliased to avoid conflicts if ever run in a mixed environment (though this plugin uses distinct aliases). Permissions remain the same.
-
-### Common Commands (Paper & Velocity)
-
-#### Configure Idle Restart
--   **Description**: Configures the idle time and player count for the idle restart feature.
--   **Paper Usage**: `/idlerestart <idleMinutes> <numberOfPlayers>`
-    -   Example: `/idlerestart 15 0`
--   **Velocity Usage**: `/vidlerestart <idleMinutes> <numberOfPlayers>` (alias: `/v_idlerestart`)
-    -   Example: `/vidlerestart 15 0`
--   **Permission**: `idlerestart.use`
-
-#### Force Restart
--   **Description**: Forces a server/proxy restart in the specified number of minutes, bypassing the idle check.
--   **Paper Usage**: `/idlerestart --force <minutes>`
-    -   Example: `/idlerestart --force 5`
--   **Velocity Usage**: `/vidlerestart --force <minutes>` (alias: `/v_idlerestart --force <minutes>`)
-    -   Example: `/vidlerestart --force 5`
--   **Permission**: `idlerestart.use`
-
-#### Check Restart Status
--   **Description**: Checks the status of the pending restart.
--   **Paper Usage**: `/idlerestartstatus`
--   **Velocity Usage**: `/vidlerestartstatus` (alias: `/v_idlerestartstatus`)
--   **Permission**: `idlerestart.status`
+| Command                                      | Description                                       | Platform | Permission            |
+| -------------------------------------------- | ------------------------------------------------- | -------- | --------------------- |
+| `/idlerestart <minutes> <players>`           | Sets the idle time and player threshold.          | Paper    | `idlerestart.use`     |
+| `/vidlerestart <minutes> <players>`          | Sets the idle time and player threshold.          | Velocity | `idlerestart.use`     |
+| `/idlerestart --force <minutes>`             | Forces a server restart in `<minutes>`.           | Paper    | `idlerestart.use`     |
+| `/vidlerestart --force <minutes>`            | Forces a proxy restart in `<minutes>`.            | Velocity | `idlerestart.use`     |
+| `/idlerestart reload`                        | Reloads the plugin's configuration.               | Paper    | `idlerestart.reload`  |
+| `/vidlerestart reload`                       | Reloads the plugin's configuration.               | Velocity | `idlerestart.reload`  |
+| `/idlerestartstatus`                         | Checks the status of a pending restart.           | Paper    | `idlerestart.status`  |
+| `/vidlerestartstatus`                        | Checks the status of a pending restart.           | Velocity | `idlerestart.status`  |
 
 ## Permissions
 
 -   **`idlerestart.use`**: Allows using the main configuration and force commands.
--   **`idlerestart.status`**: Allows using the status command to check pending restarts.
+-   **`idlerestart.status`**: Allows checking the status of a pending restart.
+-   **`idlerestart.reload`**: Allows reloading the plugin's configuration.
 
-## Example Usage
+## For Developers
 
-1.  **Configure Idle Restart (Paper)**:
-    *   Use `/idlerestart 15 0` to set idle time to 15 minutes and 0 players.
-2.  **Configure Idle Restart (Velocity)**:
-    *   Use `/vidlerestart 15 0` to set idle time to 15 minutes and 0 players across the proxy.
-3.  **Force Immediate Restart (Paper)**:
-    *   Use `/idlerestart --force 5` to force a server restart in 5 minutes.
-4.  **Force Immediate Restart (Velocity)**:
-    *   Use `/vidlerestart --force 5` to force a proxy restart in 5 minutes.
-5.  **Check Restart Status (Paper/Velocity)**:
-    *   Use `/idlerestartstatus` (Paper) or `/vidlerestartstatus` (Velocity) to check pending restarts.
+IdleRestart provides a simple yet powerful API for integration.
+
+### Dependency
+
+**Maven:**
+```xml
+<dependency>
+    <groupId>me.benrobson</groupId>
+    <artifactId>IdleRestart</artifactId>
+    <version>1.0.0</version> <!-- Use the latest version -->
+    <scope>provided</scope>
+</dependency>
+```
+
+**Paper (`plugin.yml`):**
+```yaml
+depend: [IdleRestart]
+```
+
+**Velocity (`velocity-plugin.json`):**
+```json
+"dependencies": [
+  {
+    "id": "idlerestart",
+    "optional": false
+  }
+]
+```
+
+### Accessing the API
+
+**Paper/Bukkit:**
+```java
+import me.benrobson.idlerestart.api.IdleRestartAPI;
+import org.bukkit.plugin.RegisteredServiceProvider;
+
+// In your onEnable method:
+RegisteredServiceProvider<IdleRestartAPI> provider = getServer().getServicesManager().getRegistration(IdleRestartAPI.class);
+if (provider != null) {
+    IdleRestartAPI api = provider.getProvider();
+    // Use the API
+}
+```
+
+**Velocity:**
+The API is not available via a service manager on Velocity in this version. You can interact with the plugin via its commands or by depending on it and accessing the main instance (not recommended).
+
+### API Methods
+
+-   `void scheduleRestart(int minutes, String reason)`
+-   `void forceRestart(int minutes)`
+-   `void cancelRestart(String reason)`
+-   `boolean isRestartPending()`
+-   `long getRestartInitiatedTimeMillis()`
+-   `long getActualRestartTimeMillis()`
+
+### API Events (Paper/Bukkit Only)
+
+-   `RestartScheduledEvent`
+-   `RestartCancelledEvent`
+-   `RestartForcedEvent`
+
+**Example Listener:**
+```java
+import me.benrobson.idlerestart.api.events.RestartScheduledEvent;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+
+public class MyListener implements Listener {
+    @EventHandler
+    public void onRestartScheduled(RestartScheduledEvent event) {
+        System.out.println("Server is restarting in " + event.getMinutes() + " minutes. Reason: " + event.getReason());
+    }
+}
+```
 
 ## Support
 
