@@ -31,6 +31,7 @@ public interface PlatformAdapter {
     boolean isScheduledRestartEnabled();
     java.util.List<String> getScheduledRestartTimes();
     String getScheduledRestartTimezone();
+    int getScheduledRestartForceDelayMinutes();
     void reload();
 
     // Discord Webhook

@@ -4,8 +4,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import me.benrobson.idlerestart.IdleRestartCore;
 import me.benrobson.idlerestart.platform.PlatformAdapter;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import me.benrobson.idlerestart.IdleRestartCore.RestartType;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.List;
@@ -26,10 +25,11 @@ public class VelocityIdleRestartStatusCommand implements SimpleCommand {
         CommandSource source = invocation.source();
 
         if (!source.hasPermission("idlerestart.status")) { // Using the same permission node
-            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &cYou do not have permission to use this command."));
+            sendMessage(source, platform.getIdlePrefix() + " &cYou do not have permission to use this command.");
             return;
         }
 
+        String prefix = platform.getIdlePrefix();
         if (core.isRestartPending()) {
             long initiatedTimeMillis = core.getRestartInitiatedTimeMillis();
             long actualRestartTimeMillis = core.getActualRestartTimeMillis();
@@ -42,15 +42,30 @@ public class VelocityIdleRestartStatusCommand implements SimpleCommand {
             long remainingMinutes = TimeUnit.MILLISECONDS.toMinutes(remainingTimeMillis);
             long remainingSeconds = TimeUnit.MILLISECONDS.toSeconds(remainingTimeMillis) % 60;
 
-            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &eProxy restart is currently pending."));
-            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &e -> Initiated " + pendingSinceMinutes + " minutes ago."));
+            RestartType restartType = core.getCurrentRestartType();
+
+            sendMessage(source, prefix + " &eProxy restart is currently pending.");
+            sendMessage(source, prefix + " &e -> Initiated " + pendingSinceMinutes + " minutes ago.");
+            sendMessage(source, prefix + " &e -> Restart type: " + formatRestartType(restartType) + ".");
             if (remainingTimeMillis > 0) {
-                source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &e -> Time until restart: " + remainingMinutes + "m " + remainingSeconds + "s."));
+                sendMessage(source, prefix + " &e -> Time until restart: " + remainingMinutes + "m " + remainingSeconds + "s.");
             } else {
-                source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &e -> Restart is imminent or slightly overdue."));
+                sendMessage(source, prefix + " &e -> Restart is imminent or slightly overdue.");
+            }
+            if (restartType == RestartType.FORCED) {
+                sendMessage(source, prefix + " &c -> This restart is forced and will not be cancelled by player joins.");
             }
         } else {
-            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(platform.getIdlePrefix() + " &aNo proxy restart is currently pending."));
+            sendMessage(source, prefix + " &aNo proxy restart is currently pending.");
+            if (core.isScheduledRestartForcePending()) {
+                long forceTimeMillis = core.getScheduledForceCheckTimeMillis();
+                long currentTimeMillis = System.currentTimeMillis();
+                long remainingForceMillis = Math.max(forceTimeMillis - currentTimeMillis, 0);
+                long remainingForceMinutes = TimeUnit.MILLISECONDS.toMinutes(remainingForceMillis);
+                long remainingForceSeconds = TimeUnit.MILLISECONDS.toSeconds(remainingForceMillis) % 60;
+                sendMessage(source, prefix + " &eA scheduled restart force check is pending.");
+                sendMessage(source, prefix + " &e -> Time until escalation: " + remainingForceMinutes + "m " + remainingForceSeconds + "s.");
+            }
         }
     }
 
@@ -62,5 +77,14 @@ public class VelocityIdleRestartStatusCommand implements SimpleCommand {
     @Override
     public boolean hasPermission(Invocation invocation) {
         return invocation.source().hasPermission("idlerestart.status");
+    }
+
+    private void sendMessage(CommandSource source, String message) {
+        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
+    }
+
+    private String formatRestartType(RestartType type) {
+        String formatted = type.name().toLowerCase().replace('_', ' ');
+        return formatted.substring(0, 1).toUpperCase() + formatted.substring(1);
     }
 }

@@ -150,6 +150,11 @@ public class BukkitPlatformAdapter implements PlatformAdapter {
     }
 
     @Override
+    public int getScheduledRestartForceDelayMinutes() {
+        return plugin.getConfig().getInt("scheduled-restarts.force-delay-minutes", 15);
+    }
+
+    @Override
     public void reload() {
         plugin.reload();
     }

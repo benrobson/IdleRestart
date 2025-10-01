@@ -16,6 +16,17 @@ public class IdleRestartCore {
     private long actualRestartTimeMillis = 0; // Time when server will actually restart
     private SchedulerTask currentShutdownTask;
     private SchedulerTask idleCheckTask;
+    private SchedulerTask scheduledForceTask;
+    private long scheduledForceCheckTimeMillis = 0L;
+    private boolean scheduledRestartForcePending = false;
+    private RestartType currentRestartType = RestartType.NONE;
+
+    public enum RestartType {
+        NONE,
+        IDLE,
+        SCHEDULED,
+        FORCED
+    }
 
     public IdleRestartCore(PlatformAdapter platform, DiscordWebhookManager webhookManager) {
         this.platform = platform;
@@ -36,22 +47,35 @@ public class IdleRestartCore {
         idleCheckTask = platform.runTaskTimer(() -> {
             if (platform.getOnlinePlayerCount() <= platform.getNumberOfPlayers() && !isRestarting) {
                 platform.info("Server is idle. Scheduling restart.");
-                scheduleRestart(platform.getIdleMinutes(), "due to inactivity");
+                scheduleRestart(platform.getIdleMinutes(), "due to inactivity", RestartType.IDLE);
             }
         }, 0L, 20L * 60L); // Check every minute
     }
 
     public void scheduleRestart(int minutes, String reason) {
-        if (isRestarting && actualRestartTimeMillis < System.currentTimeMillis() + (minutes * 60 * 1000L)) {
+        scheduleRestart(minutes, reason, RestartType.IDLE);
+    }
+
+    public void scheduleRestart(int minutes, String reason, RestartType type) {
+        if (minutes <= 0) {
+            platform.warning("Attempted to schedule a restart with a non-positive delay (" + minutes + "). Defaulting to 1 minute.");
+            minutes = 1;
+        }
+
+        long now = System.currentTimeMillis();
+        long requestedRestartTimeMillis = now + (minutes * 60L * 1000L);
+        if (isRestarting && actualRestartTimeMillis <= requestedRestartTimeMillis && type != RestartType.FORCED) {
             platform.info("Restart already scheduled and sooner or at the same time.");
             return;
         }
 
-        cancelCurrentShutdownTask(); // Cancel any existing shutdown task
+        cancelCurrentShutdownTask();
+        cancelScheduledForceTask();
 
         isRestarting = true;
-        restartTimeMillis = System.currentTimeMillis();
-        actualRestartTimeMillis = System.currentTimeMillis() + (minutes * 60 * 1000L);
+        restartTimeMillis = now;
+        actualRestartTimeMillis = requestedRestartTimeMillis;
+        currentRestartType = type;
 
         if (platform.isBroadcastRestart()) {
             String message = platform.getIdlePrefix() + " Server will restart in " + minutes + " minutes " + reason + ".";
@@ -64,12 +88,16 @@ public class IdleRestartCore {
             }
         }
 
+        if (type == RestartType.SCHEDULED) {
+            scheduleScheduledForceCheck();
+        }
+
         currentShutdownTask = platform.runTaskLater(() -> {
-            if (isRestarting) { // Re-check in case it was cancelled
+            if (isRestarting) {
                 platform.info("Executing scheduled server shutdown.");
                 platform.shutdown();
             }
-        }, minutes * 60 * 20L); // minutes to ticks
+        }, minutes * 60L * 20L);
         platform.info("Server restart scheduled in " + minutes + " minutes.");
         webhookManager.sendRestartNotification(reason);
         platform.callEvent(new RestartScheduledEvent(minutes, reason));
@@ -77,7 +105,7 @@ public class IdleRestartCore {
 
     public void forceRestart(int minutes) {
         platform.info("Forcing server restart in " + minutes + " minutes.");
-        scheduleRestart(minutes, "due to forced restart");
+        scheduleRestart(minutes, "due to forced restart", RestartType.FORCED);
         platform.callEvent(new RestartForcedEvent(minutes));
     }
 
@@ -88,11 +116,66 @@ public class IdleRestartCore {
         }
     }
 
+    private void cancelScheduledForceTask() {
+        if (scheduledForceTask != null && !scheduledForceTask.isCancelled()) {
+            scheduledForceTask.cancel();
+        }
+        scheduledForceTask = null;
+        scheduledForceCheckTimeMillis = 0L;
+        scheduledRestartForcePending = false;
+    }
+
+    private void scheduleScheduledForceCheck() {
+        int delayMinutes = platform.getScheduledRestartForceDelayMinutes();
+        if (delayMinutes <= 0) {
+            platform.info("Scheduled restart force delay is zero or negative; skipping force escalation.");
+            scheduledRestartForcePending = false;
+            scheduledForceCheckTimeMillis = 0L;
+            return;
+        }
+
+        scheduledRestartForcePending = true;
+        long now = System.currentTimeMillis();
+        scheduledForceCheckTimeMillis = now + (delayMinutes * 60L * 1000L);
+        platform.info("Scheduled restart will be forced if the player threshold is still met in " + delayMinutes + " minutes.");
+
+        scheduledForceTask = platform.runTaskLater(() -> handleScheduledForceCheck(delayMinutes), delayMinutes * 60L * 20L);
+    }
+
+    private void handleScheduledForceCheck(int delayMinutes) {
+        scheduledForceTask = null;
+        if (!scheduledRestartForcePending) {
+            platform.info("Scheduled restart force escalation no longer required.");
+            scheduledForceCheckTimeMillis = 0L;
+            return;
+        }
+
+        scheduledRestartForcePending = false;
+        scheduledForceCheckTimeMillis = 0L;
+
+        int onlinePlayers = platform.getOnlinePlayerCount();
+        int threshold = platform.getNumberOfPlayers();
+        if (onlinePlayers <= threshold) {
+            platform.info("Scheduled restart threshold not met after " + delayMinutes + " minutes (" + onlinePlayers + " online, threshold " + threshold + "). Initiating forced restart.");
+            forceRestart(1);
+        } else {
+            platform.info("Scheduled restart threshold met after " + delayMinutes + " minutes (" + onlinePlayers + " online, threshold " + threshold + "). Forced restart not required.");
+        }
+    }
+
     public void cancelRestart(String reason) {
         if (isRestarting) {
+            RestartType cancelledType = currentRestartType;
             isRestarting = false;
+            currentRestartType = RestartType.NONE;
+            restartTimeMillis = 0L;
             actualRestartTimeMillis = 0;
             cancelCurrentShutdownTask();
+            if (cancelledType != RestartType.SCHEDULED) {
+                cancelScheduledForceTask();
+            } else if (scheduledRestartForcePending) {
+                platform.info("Scheduled restart cancelled, but force check remains pending.");
+            }
             platform.info("Server restart cancelled. Reason: " + reason);
             if (platform.isBroadcastRestart()) {
                 platform.broadcastMessage(platform.getIdlePrefix() + " Server restart has been cancelled. Reason: " + reason);
@@ -103,12 +186,11 @@ public class IdleRestartCore {
 
     public void onPlayerJoin() {
         if (isRestarting) {
-            long remainingTimeMillis = actualRestartTimeMillis - System.currentTimeMillis();
-            int joinDelayMillis = platform.getJoinDelayMinutes() * 60 * 1000;
+            if (currentRestartType == RestartType.FORCED) {
+                platform.info("Player joined while a forced restart is pending. Restart will continue as scheduled.");
+                return;
+            }
 
-            // Only delay if the player joins before the final moments OR if joinDelay is significant enough
-            // This avoids issues where a player joins 1 second before restart and it gets delayed.
-            // For now, let's always delay if a restart is pending.
             cancelRestart("player joined");
             platform.info("Player joined. Restart cancelled. Scheduling new idle check after " + platform.getJoinDelayMinutes() + " minutes.");
 
@@ -118,6 +200,8 @@ public class IdleRestartCore {
             // And the PlayerJoinListener says "Schedule a new restart check after the delay"
             // This seems more aligned with "delaying" the restart process.
             platform.runTaskLater(this::startIdleCheck, platform.getJoinDelayMinutes() * 60 * 20L);
+        } else if (scheduledRestartForcePending) {
+            platform.info("Player joined while a scheduled restart force check is pending. Restart remains cancelled unless the idle threshold is met when the force check runs.");
         }
     }
 
@@ -131,6 +215,18 @@ public class IdleRestartCore {
 
     public long getActualRestartTimeMillis() {
         return actualRestartTimeMillis;
+    }
+
+    public RestartType getCurrentRestartType() {
+        return currentRestartType;
+    }
+
+    public boolean isScheduledRestartForcePending() {
+        return scheduledRestartForcePending;
+    }
+
+    public long getScheduledForceCheckTimeMillis() {
+        return scheduledRestartForcePending ? scheduledForceCheckTimeMillis : 0L;
     }
 
     public void setIdleMinutes(int minutes) {
@@ -158,6 +254,7 @@ public class IdleRestartCore {
             idleCheckTask.cancel();
         }
         cancelCurrentShutdownTask();
+        cancelScheduledForceTask();
     }
 
     public void reload() {

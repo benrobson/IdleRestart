@@ -183,6 +183,11 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
     }
 
     @Override
+    public int getScheduledRestartForceDelayMinutes() {
+        return plugin.getConfigManager().getScheduledRestartForceDelayMinutes();
+    }
+
+    @Override
     public void reload() {
         plugin.reload();
     }
