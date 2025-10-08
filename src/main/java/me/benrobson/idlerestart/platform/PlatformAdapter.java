@@ -39,6 +39,10 @@ public interface PlatformAdapter {
     String getDiscordWebhookUrl();
     String getDiscordServerName();
 
-    // Events
-    void callEvent(Object event);
+    // Events (platform-specific implementations may no-op if unsupported)
+    void fireRestartScheduledEvent(int minutes, String reason);
+
+    void fireRestartForcedEvent(int minutes);
+
+    void fireRestartCancelledEvent(String reason);
 }

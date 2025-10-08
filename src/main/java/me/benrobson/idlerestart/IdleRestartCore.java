@@ -1,8 +1,5 @@
 package me.benrobson.idlerestart;
 
-import me.benrobson.idlerestart.api.events.RestartCancelledEvent;
-import me.benrobson.idlerestart.api.events.RestartForcedEvent;
-import me.benrobson.idlerestart.api.events.RestartScheduledEvent;
 import me.benrobson.idlerestart.platform.PlatformAdapter;
 import me.benrobson.idlerestart.platform.PlayerAdapter;
 import me.benrobson.idlerestart.platform.SchedulerTask;
@@ -100,13 +97,13 @@ public class IdleRestartCore {
         }, minutes * 60L * 20L);
         platform.info("Server restart scheduled in " + minutes + " minutes.");
         webhookManager.sendRestartNotification(reason);
-        platform.callEvent(new RestartScheduledEvent(minutes, reason));
+        platform.fireRestartScheduledEvent(minutes, reason);
     }
 
     public void forceRestart(int minutes) {
         platform.info("Forcing server restart in " + minutes + " minutes.");
         scheduleRestart(minutes, "due to forced restart", RestartType.FORCED);
-        platform.callEvent(new RestartForcedEvent(minutes));
+        platform.fireRestartForcedEvent(minutes);
     }
 
     private void cancelCurrentShutdownTask() {
@@ -180,7 +177,7 @@ public class IdleRestartCore {
             if (platform.isBroadcastRestart()) {
                 platform.broadcastMessage(platform.getIdlePrefix() + " Server restart has been cancelled. Reason: " + reason);
             }
-            platform.callEvent(new RestartCancelledEvent(reason));
+            platform.fireRestartCancelledEvent(reason);
         }
     }
 
