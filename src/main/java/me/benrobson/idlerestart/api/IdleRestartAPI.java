@@ -1,6 +1,7 @@
 package me.benrobson.idlerestart.api;
 
 import me.benrobson.idlerestart.IdleRestartCore;
+import me.benrobson.idlerestart.IdleRestartCore.RestartType;
 
 public class IdleRestartAPI {
     private final IdleRestartCore core;
@@ -17,6 +18,17 @@ public class IdleRestartAPI {
      */
     public void scheduleRestart(int minutes, String reason) {
         core.scheduleRestart(minutes, reason);
+    }
+
+    /**
+     * Schedules a server restart with the specified restart type.
+     *
+     * @param minutes The number of minutes until the restart.
+     * @param reason  The reason for the restart.
+     * @param type    The type of restart to schedule.
+     */
+    public void scheduleRestart(int minutes, String reason, RestartType type) {
+        core.scheduleRestart(minutes, reason, type);
     }
 
     /**
@@ -62,5 +74,32 @@ public class IdleRestartAPI {
      */
     public long getActualRestartTimeMillis() {
         return core.getActualRestartTimeMillis();
+    }
+
+    /**
+     * Gets the type of restart currently scheduled.
+     *
+     * @return The current restart type.
+     */
+    public RestartType getCurrentRestartType() {
+        return core.getCurrentRestartType();
+    }
+
+    /**
+     * Checks if a scheduled restart force escalation is pending.
+     *
+     * @return true if a scheduled restart force check is pending, false otherwise.
+     */
+    public boolean isScheduledRestartForcePending() {
+        return core.isScheduledRestartForcePending();
+    }
+
+    /**
+     * Gets the time when a scheduled restart force check will occur.
+     *
+     * @return The time in milliseconds since the epoch, or 0 if no force check is pending.
+     */
+    public long getScheduledForceCheckTimeMillis() {
+        return core.getScheduledForceCheckTimeMillis();
     }
 }

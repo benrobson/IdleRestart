@@ -1,6 +1,9 @@
 package me.benrobson.idlerestart.platform;
 
 import me.benrobson.idlerestart.IdleRestartMain;
+import me.benrobson.idlerestart.api.events.RestartCancelledEvent;
+import me.benrobson.idlerestart.api.events.RestartForcedEvent;
+import me.benrobson.idlerestart.api.events.RestartScheduledEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -150,6 +153,11 @@ public class BukkitPlatformAdapter implements PlatformAdapter {
     }
 
     @Override
+    public int getScheduledRestartForceDelayMinutes() {
+        return plugin.getConfig().getInt("scheduled-restarts.force-delay-minutes", 15);
+    }
+
+    @Override
     public void reload() {
         plugin.reload();
     }
@@ -170,9 +178,17 @@ public class BukkitPlatformAdapter implements PlatformAdapter {
     }
 
     @Override
-    public void callEvent(Object event) {
-        if (event instanceof org.bukkit.event.Event) {
-            Bukkit.getPluginManager().callEvent((org.bukkit.event.Event) event);
-        }
+    public void fireRestartScheduledEvent(int minutes, String reason) {
+        Bukkit.getPluginManager().callEvent(new RestartScheduledEvent(minutes, reason));
+    }
+
+    @Override
+    public void fireRestartForcedEvent(int minutes) {
+        Bukkit.getPluginManager().callEvent(new RestartForcedEvent(minutes));
+    }
+
+    @Override
+    public void fireRestartCancelledEvent(String reason) {
+        Bukkit.getPluginManager().callEvent(new RestartCancelledEvent(reason));
     }
 }

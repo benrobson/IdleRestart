@@ -25,9 +25,11 @@ scheduled-restarts:
   times:
     - "04:00"
     - "16:00"
-  # The timezone to use for scheduled restarts.
+  # The timezone to use for scheduled restarts (examples: UTC, Australia/Sydney).
   # A list of valid timezones can be found here: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   timezone: "UTC"
+  # Minutes to wait before forcing a scheduled restart if the idle player threshold is still met
+  force-delay-minutes: 15
 
 # Discord Webhook
 # Enable or disable Discord webhook notifications

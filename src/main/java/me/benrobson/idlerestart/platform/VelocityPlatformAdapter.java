@@ -183,6 +183,11 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
     }
 
     @Override
+    public int getScheduledRestartForceDelayMinutes() {
+        return plugin.getConfigManager().getScheduledRestartForceDelayMinutes();
+    }
+
+    @Override
     public void reload() {
         plugin.reload();
     }
@@ -203,8 +208,17 @@ public class VelocityPlatformAdapter implements PlatformAdapter {
     }
 
     @Override
-    public void callEvent(Object event) {
-        // Velocity does not have a synchronous, Bukkit-like event bus that can be called this way.
-        // This will be a no-op for Velocity.
+    public void fireRestartScheduledEvent(int minutes, String reason) {
+        // Velocity does not expose Bukkit-style events; this is a no-op.
+    }
+
+    @Override
+    public void fireRestartForcedEvent(int minutes) {
+        // Velocity does not expose Bukkit-style events; this is a no-op.
+    }
+
+    @Override
+    public void fireRestartCancelledEvent(String reason) {
+        // Velocity does not expose Bukkit-style events; this is a no-op.
     }
 }

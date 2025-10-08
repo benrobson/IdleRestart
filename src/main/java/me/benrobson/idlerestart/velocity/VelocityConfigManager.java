@@ -28,6 +28,7 @@ public class VelocityConfigManager {
     private boolean scheduledRestartEnabled = false;
     private List<String> scheduledRestartTimes = Arrays.asList("04:00", "16:00");
     private String scheduledRestartTimezone = "UTC";
+    private int scheduledRestartForceDelayMinutes = 15;
 
     // Discord Webhook
     private boolean discordWebhookEnabled = false;
@@ -66,6 +67,7 @@ public class VelocityConfigManager {
             scheduledRestartEnabled = config.getOrElse("scheduled-restarts.enabled", scheduledRestartEnabled);
             scheduledRestartTimes = config.getOrElse("scheduled-restarts.times", scheduledRestartTimes);
             scheduledRestartTimezone = config.getOrElse("scheduled-restarts.timezone", scheduledRestartTimezone);
+            scheduledRestartForceDelayMinutes = config.getIntOrElse("scheduled-restarts.force-delay-minutes", scheduledRestartForceDelayMinutes);
 
             // Discord Webhook
             discordWebhookEnabled = config.getOrElse("discord.enabled", discordWebhookEnabled);
@@ -105,8 +107,10 @@ public class VelocityConfigManager {
         if (!config.contains("scheduled-restarts.enabled")) config.set("scheduled-restarts.enabled", scheduledRestartEnabled);
         config.setComment("scheduled-restarts.times", "A list of times in HH:mm format (24-hour clock) to restart the server");
         if (!config.contains("scheduled-restarts.times")) config.set("scheduled-restarts.times", scheduledRestartTimes);
-        config.setComment("scheduled-restarts.timezone", "The timezone for scheduled restarts. Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones");
+        config.setComment("scheduled-restarts.timezone", "The timezone for scheduled restarts (examples: UTC, Australia/Sydney). Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones");
         if (!config.contains("scheduled-restarts.timezone")) config.set("scheduled-restarts.timezone", scheduledRestartTimezone);
+        config.setComment("scheduled-restarts.force-delay-minutes", "Minutes to wait before forcing a scheduled restart if the idle threshold is still met");
+        if (!config.contains("scheduled-restarts.force-delay-minutes")) config.set("scheduled-restarts.force-delay-minutes", scheduledRestartForceDelayMinutes);
 
         // Discord Webhook
         config.setComment("discord.enabled", "Enable or disable Discord webhook notifications");
@@ -133,6 +137,7 @@ public class VelocityConfigManager {
     public boolean isScheduledRestartEnabled() { return scheduledRestartEnabled; }
     public java.util.List<String> getScheduledRestartTimes() { return scheduledRestartTimes; }
     public String getScheduledRestartTimezone() { return scheduledRestartTimezone; }
+    public int getScheduledRestartForceDelayMinutes() { return scheduledRestartForceDelayMinutes; }
     public boolean isDiscordWebhookEnabled() { return discordWebhookEnabled; }
     public String getDiscordWebhookUrl() { return discordWebhookUrl; }
     public String getDiscordServerName() { return discordServerName; }
