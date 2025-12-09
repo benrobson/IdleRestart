@@ -79,7 +79,13 @@ public class BukkitPlatformAdapter implements PlatformAdapter {
 
     @Override
     public void shutdown() {
-        Bukkit.shutdown();
+        info("Attempting to restart the server via Spigot API.");
+        try {
+            Bukkit.spigot().restart();
+        } catch (UnsupportedOperationException | NoSuchMethodError ex) {
+            warning("Spigot restart is not supported on this platform. Falling back to shutdown.");
+            Bukkit.shutdown();
+        }
     }
 
     @Override

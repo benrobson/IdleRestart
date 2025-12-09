@@ -91,7 +91,7 @@ public class IdleRestartCore {
 
         currentShutdownTask = platform.runTaskLater(() -> {
             if (isRestarting) {
-                platform.info("Executing scheduled server shutdown.");
+                platform.info("Executing scheduled server restart.");
                 platform.shutdown();
             }
         }, minutes * 60L * 20L);
